@@ -1,0 +1,3 @@
+
+class UnInitedError(Exception):
+    pass
