@@ -1,14 +1,15 @@
 import numpy as np
-from pmlb import fetch_data
+from sklearn.datasets import make_classification
 from sklearn.linear_model import RidgeClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.preprocessing import StandardScaler
-from pytsk.cluster import FuzzyCMeans
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
-# Prepare dataset by the PMLB package
-X, y = fetch_data('segmentation', return_X_y=True, local_cache_dir='./data/')
+from pytsk.cluster import FuzzyCMeans
+
+# Prepare dataset
+X, y = make_classification(n_samples=1000, n_features=20, n_classes=2)  # X: [n_samples, n_features], y: [n_samples, 1]
 n_class = len(np.unique(y))  # Num. of class
 
 # split train-test
@@ -35,11 +36,9 @@ model.fit(x_train, y_train)
 y_pred = model.predict(x_test)
 print("ACC: {:.4f}".format(accuracy_score(y_test, y_pred)))
 
-# ---------------- get the input of consequent part for further analysis-----------------
+# ---------------- Get the input of consequent part for further analysis-----------------
 antecedent = model.named_steps['GaussianAntecedent']
 consequent_input = antecedent.transform(x_test)
-print(x_test.shape)
-print(consequent_input.shape)
 
 # --------------- Grid search all important parameters ---------------
 param_grid = {

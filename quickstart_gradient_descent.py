@@ -1,22 +1,23 @@
 import numpy as np
 import torch
 import torch.nn as nn
-from pytsk.gradient_descent.antecedent import AntecedentGMF, AntecedentShareGMF, antecedent_init_center
+from sklearn.datasets import make_classification
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from torch.optim import AdamW
+
+from pytsk.gradient_descent.antecedent import AntecedentGMF, antecedent_init_center
 from pytsk.gradient_descent.callbacks import EarlyStoppingACC
 from pytsk.gradient_descent.training import Wrapper
 from pytsk.gradient_descent.tsk import TSK
-from pmlb import fetch_data
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split, StratifiedKFold
-from sklearn.preprocessing import StandardScaler
-from torch.optim import AdamW
 
 # Define random seed
 torch.manual_seed(1447)
 np.random.seed(1447)
 
-# Prepare dataset by the PMLB package
-X, y = fetch_data('segmentation', return_X_y=True, local_cache_dir='./data/')
+# Prepare dataset
+X, y = make_classification(n_samples=1000, n_features=20, n_classes=2)  # X: [n_samples, n_features], y: [n_samples, 1]
 n_class = len(np.unique(y))  # Num. of class
 
 # split train-test
@@ -50,10 +51,9 @@ order = 1
 init_center = antecedent_init_center(x_train, y_train, n_rule=n_rule)
 gmf = nn.Sequential(
         AntecedentGMF(in_dim=X.shape[1], n_rule=n_rule, high_dim=True, init_center=init_center),
-        # nn.LayerNorm(n_rule),
-        # nn.ReLU()
-    )
-# set high_dim=True is highly recommended.
+        nn.LayerNorm(n_rule),
+        nn.ReLU()
+    )# set high_dim=True is highly recommended.
 
 # --------- Define full TSK model ------------
 model = TSK(in_dim=X.shape[1], out_dim=n_class, n_rule=n_rule, antecedent=gmf, order=order, precons=None)
@@ -65,11 +65,11 @@ for n, p in model.named_parameters():
         ante_param.append(p)
     else:
         other_param.append(p)
-optimizer = AdamW(
-    [{'params': ante_param, "weight_decay": 0},
-    {'params': other_param, "weight_decay": weight_decay},],
-    lr=lr
-)
+optimizer = AdamW([
+    {'params': ante_param, "weight_decay": 0},
+    {'params': other_param, "weight_decay": weight_decay}
+], lr=lr)
+
 # ----------------- split 10% data for earlystopping -----------------
 x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2)
 # ----------------- define the earlystopping callback -----------------
