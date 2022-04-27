@@ -9,16 +9,16 @@ class Callback:
     examples, :func:`EvaluateAcc <EvaluateAcc>` and :func:`EarlyStoppingACC <EarlyStoppingACC>`.
     """
     def on_batch_begin(self, wrapper):
-        raise NotImplementedError
+        pass
 
     def on_batch_end(self, wrapper):
-        raise NotImplementedError
+        pass
 
     def on_epoch_begin(self, wrapper):
-        raise NotImplementedError
+        pass
 
     def on_epoch_end(self, wrapper):
-        raise NotImplementedError
+        pass
 
 
 class EvaluateAcc(Callback):
